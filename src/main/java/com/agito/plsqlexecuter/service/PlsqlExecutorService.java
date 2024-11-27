@@ -17,8 +17,8 @@ public class PlsqlExecutorService {
     public void executePlsql() {
         String plsqlScript = """
             DECLARE
-  v_polid NUMBER := 2579711; -- Bind variable
-  proc CONSTANT VARCHAR2(100) := '001_AEGL_11466.sql';
+  v_polid NUMBER := 2497707; -- Bind variable
+  proc CONSTANT VARCHAR2(100) := 'PLSQL_EXECUTER_SERVICE.sql';
 BEGIN
   FOR r IN (SELECT *
               FROM zeyl
@@ -68,12 +68,14 @@ END;
 
         jdbcTemplate.execute((Connection connection) -> {
             try (CallableStatement statement = connection.prepareCall(plsqlScript)) {
-                statement.execute();
-
+                
                 // Enable DBMS_OUTPUT
                 try (CallableStatement enableOutput = connection.prepareCall("BEGIN DBMS_OUTPUT.ENABLE(1000000); END;")) {
                     enableOutput.execute();
                 }
+
+                // Statement Execute
+                statement.execute();
 
                 // Retrieve DBMS_OUTPUT content
                 try (CallableStatement getOutput = connection.prepareCall(
