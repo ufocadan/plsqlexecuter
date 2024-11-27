@@ -2,11 +2,14 @@ package com.agito.plsqlexecuter.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
+
+// import java.sql.CallableStatement;
+// import java.sql.Connection;
+// import java.sql.SQLException;
 
 @Service
 public class PlsqlExecutorService {
@@ -14,7 +17,8 @@ public class PlsqlExecutorService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public void executePlsql() {
+    @Async // Mark this method as asynchronous
+    public CompletableFuture<String> executePlsqlAsync() {
         String plsqlScript = """
             DECLARE
   v_polid NUMBER := 2497707; -- Bind variable
@@ -66,35 +70,42 @@ BEGIN
 END;
         """;
 
-        jdbcTemplate.execute((Connection connection) -> {
-            try (CallableStatement statement = connection.prepareCall(plsqlScript)) {
+        try {
+            jdbcTemplate.execute(plsqlScript);
+            return CompletableFuture.completedFuture("PL/SQL script executed successfully!");
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+        }
+
+        // jdbcTemplate.execute((Connection connection) -> {
+            // try (CallableStatement statement = connection.prepareCall(plsqlScript)) {
                 
                 // Enable DBMS_OUTPUT
-                try (CallableStatement enableOutput = connection.prepareCall("BEGIN DBMS_OUTPUT.ENABLE(1000000); END;")) {
-                    enableOutput.execute();
-                }
+                // try (CallableStatement enableOutput = connection.prepareCall("BEGIN DBMS_OUTPUT.ENABLE(1000000); END;")) {
+                //     enableOutput.execute();
+                // }
 
                 // Statement Execute
-                statement.execute();
+                // statement.execute();
 
                 // Retrieve DBMS_OUTPUT content
-                try (CallableStatement getOutput = connection.prepareCall(
-                    "DECLARE " +
-                    "  l_line VARCHAR2(255); " +
-                    "  l_done NUMBER; " +
-                    "BEGIN " +
-                    "  LOOP " +
-                    "    DBMS_OUTPUT.GET_LINE(l_line, l_done); " +
-                    "    EXIT WHEN l_done = 1; " +
-                    "    DBMS_OUTPUT.PUT_LINE(l_line); " +
-                    "  END LOOP; " +
-                    "END;")) {
-                    getOutput.execute();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error executing PL/SQL script", e);
-            }
-            return null;
-        });
+                // try (CallableStatement getOutput = connection.prepareCall(
+                //     "DECLARE " +
+                //     "  l_line VARCHAR2(255); " +
+                //     "  l_done NUMBER; " +
+                //     "BEGIN " +
+                //     "  LOOP " +
+                //    "    DBMS_OUTPUT.GET_LINE(l_line, l_done); " +
+                //    "    EXIT WHEN l_done = 1; " +
+                //    "    DBMS_OUTPUT.PUT_LINE(l_line); " +
+                //    "  END LOOP; " +
+                //    "END;")) {
+                //    getOutput.execute();
+                // }
+            //} catch (SQLException e) {
+            //    throw new RuntimeException("Error executing PL/SQL script", e);
+            //}
+            //return null;
+        //});
     }
 }
